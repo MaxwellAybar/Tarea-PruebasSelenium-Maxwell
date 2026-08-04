@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VolleyAybar - Control de Asistencia</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #0B1D3A 0%, #1A365D 100%); color: #333; padding: 40px 15px; min-height: 100vh; display: flex; justify-content: center; align-items: center; }
+        .main-container { width: 100%; max-width: 650px; margin: 0 auto; }
+        .card { background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); border-top: 6px solid #C59B27; position: relative; margin-bottom: 20px; }
+        .hidden { display: none !important; }
+        .user-bar { display: flex; justify-content: space-between; align-items: center; background-color: #f8f9fa; padding: 10px 15px; border-radius: 6px; border: 1px solid #e2e8f0; margin-bottom: 20px; font-size: 14px; font-weight: 600; color: #0B1D3A; }
+        h2 { margin-bottom: 20px; font-size: 24px; color: #0B1D3A; text-align: center; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+        h3 { margin-top: 25px; margin-bottom: 15px; font-size: 18px; color: #0B1D3A; border-bottom: 2px solid #C59B27; padding-bottom: 8px; }
+        .form-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; color: #0B1D3A; }
+        input, select { width: 100%; padding: 11px 14px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 14px; transition: border-color 0.2s; }
+        input:focus, select:focus { outline: none; border-color: #C59B27; }
+        button { background-color: #0B1D3A; color: #C59B27; padding: 12px 16px; border: 2px solid #C59B27; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; font-weight: 700; transition: all 0.3s ease; text-transform: uppercase; }
+        button:hover { background-color: #C59B27; color: #0B1D3A; }
+        .btn-logout { background-color: #dc3545; color: white; border: none; width: auto; font-size: 12px; padding: 6px 12px; text-transform: none; }
+        .btn-logout:hover { background-color: #bd2130; color: white; }
+        .btn-danger { background-color: #dc3545; color: white; border: none; width: auto; font-size: 12px; padding: 6px 12px; text-transform: none; }
+        .btn-danger:hover { background-color: #bd2130; color: white; }
+        .btn-edit { background-color: #C59B27; color: #0B1D3A; border: none; width: auto; font-size: 12px; padding: 6px 12px; margin-right: 6px; text-transform: none; }
+        .btn-edit:hover { background-color: #0B1D3A; color: #C59B27; }
+        .table-responsive { width: 100%; overflow-x: auto; margin-top: 15px; }
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; }
+        th, td { border: 1px solid #e2e8f0; padding: 10px 12px; text-align: left; font-size: 14px; }
+        th { background-color: #0B1D3A; color: #FFFFFF; font-weight: 600; }
+        .alert { padding: 12px; background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; border-radius: 6px; margin-bottom: 20px; font-size: 14px; text-align: center; }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div id="auth-panel" class="card">
+            <h2>🏐 Acceso Entrenador</h2>
+            <div id="auth-alert" class="alert hidden"></div>
+            <form id="auth-form">
+                <div class="form-group">
+                    <label for="auth-email">Correo Electrónico:</label>
+                    <input type="email" id="auth-email" placeholder="entrenador@voley.com">
+                </div>
+                <div class="form-group">
+                    <label for="auth-pass">Contraseña:</label>
+                    <input type="password" id="auth-pass" placeholder="••••••••">
+                </div>
+                <button type="button" id="btn-submit-auth" onclick="ejecutarLogin()">Iniciar Sesión</button>
+            </form>
+        </div>
+
+        <div id="main-panel" class="card hidden">
+            <div class="user-bar">
+                <span>Usuario: <span id="active-user-display"></span></span>
+                <button type="button" class="btn-logout" id="btn-terminate" onclick="cerrarSesion()">Cerrar Sesión</button>
+            </div>
+
+            <h2>Registrar / Editar Atleta</h2>
+            <div id="panel-alert" class="alert hidden"></div>
+            
+            <form id="record-form">
+                <input type="hidden" id="player-index">
+                <div class="form-group">
+                    <label for="player-name">Nombre del Atleta:</label>
+                    <input type="text" id="player-name" placeholder="Ej. Alex Gómez">
+                </div>
+                <div class="form-group">
+                    <label for="player-number">Número de Camiseta (1-99):</label>
+                    <input type="number" id="player-number" placeholder="Ej. 10">
+                </div>
+                <div class="form-group">
+                    <label for="player-position">Posición:</label>
+                    <select id="player-position">
+                        <option value="Colocador">Colocador</option>
+                        <option value="Rematador">Rematador</option>
+                        <option value="Central">Central</option>
+                        <option value="Líbero">Líbero</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="player-status">Asistencia:</label>
+                    <select id="player-status">
+                        <option value="Presente">Presente</option>
+                        <option value="Ausente">Ausente</option>
+                    </select>
+                </div>
+                <button type="button" id="btn-save" onclick="guardarJugador()">Guardar Atleta</button>
+            </form>
+
+            <h3>Lista de Atletas</h3>
+            <div class="form-group">
+                <input type="text" id="search-input" placeholder="Buscar atleta por nombre..." onkeyup="filtrarJugadores()">
+            </div>
+
+            <div class="table-responsive">
+                <table id="players-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre</th>
+                            <th>Número</th>
+                            <th>Posición</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="players-list"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let jugadores = [];
+
+        function ejecutarLogin() {
+            try {
+                const email = document.getElementById('auth-email').value.trim();
+                const password = document.getElementById('auth-pass').value.trim();
+                const aviso = document.getElementById('auth-alert');
+
+                if (!email || !password) {
+                    aviso.innerText = "Campos obligatorios vacíos";
+                    aviso.classList.remove('hidden');
+                    return;
+                }
+
+                if (email === "entrenador@voley.com" && password === "123456") {
+                    aviso.classList.add('hidden');
+                    document.getElementById('active-user-display').innerText = email;
+                    document.getElementById('auth-panel').classList.add('hidden');
+                    document.getElementById('main-panel').classList.remove('hidden');
+                } else {
+                    aviso.innerText = "Credenciales incorrectas";
+                    aviso.classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error("Error en acceso:", err);
+            }
+        }
+
+        function cerrarSesion() {
+            try {
+                document.getElementById('main-panel').classList.add('hidden');
+                document.getElementById('auth-panel').classList.remove('hidden');
+                document.getElementById('auth-email').value = "";
+                document.getElementById('auth-pass').value = "";
+                document.getElementById('active-user-display').innerText = "";
+                limpiarFormulario();
+            } catch (err) {
+                console.error("Error al salir:", err);
+            }
+        }
+
+        function guardarJugador() {
+            try {
+                const name = document.getElementById('player-name').value.trim();
+                const rawNumber = document.getElementById('player-number').value.trim();
+                const number = parseInt(rawNumber, 10);
+                const position = document.getElementById('player-position').value;
+                const status = document.getElementById('player-status').value;
+                const index = document.getElementById('player-index').value;
+                const avisoPanel = document.getElementById('panel-alert');
+
+                if (!name || rawNumber === "" || isNaN(number)) {
+                    avisoPanel.innerText = "Datos incompletos";
+                    avisoPanel.classList.remove('hidden');
+                    return;
+                }
+
+                if (number < 1 || number > 99) {
+                    avisoPanel.innerText = "Número fuera de rango de límite";
+                    avisoPanel.classList.remove('hidden');
+                    return;
+                }
+
+                avisoPanel.classList.add('hidden');
+
+                if (index === "") {
+                    jugadores.push({ name, number, position, status });
+                } else {
+                    jugadores[index] = { name, number, position, status };
+                }
+
+                limpiarFormulario();
+                renderizarTabla();
+            } catch (err) {
+                console.error("Error al guardar:", err);
+            }
+        }
+
+        function renderizarTabla() {
+            try {
+                const tbody = document.getElementById('players-list');
+                tbody.innerHTML = "";
+                jugadores.forEach((j, i) => {
+                    tbody.innerHTML += `
+                        <tr class="player-row">
+                            <td class="col-name">${j.name}</td>
+                            <td>${j.number}</td>
+                            <td>${j.position}</td>
+                            <td>${j.status}</td>
+                            <td>
+                                <button class="btn-edit" onclick="cargarEdicion(${i})">Editar</button>
+                                <button class="btn-danger" onclick="eliminarJugador(${i})">Eliminar</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (err) {
+                console.error("Error al renderizar tabla:", err);
+            }
+        }
+
+        function cargarEdicion(i) {
+            try {
+                if (jugadores[i]) {
+                    document.getElementById('player-name').value = jugadores[i].name;
+                    document.getElementById('player-number').value = jugadores[i].number;
+                    document.getElementById('player-position').value = jugadores[i].position;
+                    document.getElementById('player-status').value = jugadores[i].status;
+                    document.getElementById('player-index').value = i;
+                    document.getElementById('btn-save').innerText = "Actualizar Atleta";
+                }
+            } catch (err) {
+                console.error("Error al cargar edición:", err);
+            }
+        }
+
+        function eliminarJugador(i) {
+            try {
+                if (i >= 0 && i < jugadores.length) {
+                    const confirmacion = confirm("¿Está seguro de que desea eliminar este registro?");
+                    if (confirmacion) {
+                        jugadores.splice(i, 1);
+                        limpiarFormulario();
+                        renderizarTabla();
+                    }
+                }
+            } catch (err) {
+                console.error("Error al eliminar jugador:", err);
+            }
+        }
+
+        function filtrarJugadores() {
+            try {
+                const query = document.getElementById('search-input').value.toLowerCase();
+                const filas = document.querySelectorAll('.player-row');
+                filas.forEach(f => {
+                    const name = f.querySelector('.col-name').innerText.toLowerCase();
+                    f.style.display = name.includes(query) ? "" : "none";
+                });
+            } catch (err) {
+                console.error("Error al filtrar jugadores:", err);
+            }
+        }
+
+        function limpiarFormulario() {
+            try {
+                document.getElementById('player-name').value = "";
+                document.getElementById('player-number').value = "";
+                document.getElementById('player-index').value = "";
+                document.getElementById('btn-save').innerText = "Guardar Atleta";
+            } catch (err) {
+                console.error("Error al limpiar formulario:", err);
+            }
+        }
+    </script>
+</body>
+</html>

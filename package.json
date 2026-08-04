@@ -1,0 +1,15 @@
+{
+  "name": "tarea4-selenium-maxwell",
+  "version": "1.0.0",
+  "description": "Pruebas automatizadas con Selenium y Avast Secure Browser",
+  "main": "test/VolleyAybarSeleniumTests.js",
+  "scripts": {
+    "test": "mocha test/VolleyAybarSeleniumTests.js --reporter mochawesome --reporter-options reportDir=mochawesome-report,reportFilename=index --timeout 60000"
+  },
+  "devDependencies": {
+    "chromedriver": "^131.0.0",
+    "mocha": "^10.2.0",
+    "mochawesome": "^7.1.3",
+    "selenium-webdriver": "^4.15.0"
+  }
+}
